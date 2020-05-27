@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import IngredientForm from "./IngredientForm";
 import IngredientList from "./IngredientList";
@@ -7,11 +7,45 @@ import Search from "./Search";
 const Ingredients = () => {
   const [userIngredients, setUserIngredients] = useState([]);
 
+  // useEffect(() => {
+  //   fetch("https://react-hooks-study-a6e8d.firebaseio.com/ingredients.json")
+  //     .then((res) => res.json())
+  //     .then((resData) => {
+  //       const loadedIngredients = [];
+  //       for (let key in resData) {
+  //         loadedIngredients.push({
+  //           id: key,
+  //           title: resData[key].title,
+  //           amount: resData[key].amount,
+  //         });
+  //       }
+  //       setUserIngredients(loadedIngredients);
+  //     });
+  // }, []);
+
+  useEffect(() => {
+    console.log("Reading", userIngredients);
+  }, [userIngredients]);
+
+  const filteredIngredientsHandle = useCallback((filteredIngredients) => {
+    setUserIngredients(filteredIngredients);
+  }, []);
+
   const addIngredientHandler = (ingredient) => {
-    setUserIngredients((prevIngredients) => [
-      ...prevIngredients,
-      { id: Math.random().toString(), ...ingredient },
-    ]);
+    fetch("https://react-hooks-study-a6e8d.firebaseio.com/ingredients.json", {
+      method: "POST",
+      body: JSON.stringify(ingredient),
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((response) => {
+        return response.json();
+      })
+      .then((responseData) => {
+        setUserIngredients((prevIngredients) => [
+          ...prevIngredients,
+          { id: responseData.name, ...ingredient },
+        ]);
+      });
   };
 
   const removeIngredientHandler = (ingredientId) => {
@@ -25,7 +59,7 @@ const Ingredients = () => {
       <IngredientForm onAddIngredient={addIngredientHandler} />
 
       <section>
-        <Search />
+        <Search onLoadIngredients={filteredIngredientsHandle} />
         <IngredientList
           ingredients={userIngredients}
           onRemoveItem={removeIngredientHandler}
